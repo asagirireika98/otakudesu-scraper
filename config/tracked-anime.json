@@ -1,0 +1,16 @@
+{
+  "anime": [
+    {
+      "slug": "kaijuu-carameliser-sub-indo",
+      "name": "Otome Kaijuu Caraméliser"
+    },
+    {
+      "slug": "youjo-senki-s2-sub-indo",
+      "name": "Youjo Senki Season 2"
+    }
+  ],
+  "settings": {
+    "max_episodes_per_anime": 5,
+    "preferred_quality": "720p"
+  }
+}

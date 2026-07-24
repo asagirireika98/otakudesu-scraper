@@ -1,0 +1,11 @@
+name = "otakudesu-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+OTAKUDESU_DOMAINS = "otakudesu.blog,otakudesu.io,otakudesu.cloud"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "YOUR_KV_NAMESPACE_ID"

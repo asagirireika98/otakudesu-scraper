@@ -1,0 +1,21 @@
+{
+  "name": "otakudesu-scraper",
+  "version": "1.0.0",
+  "description": "Scrape anime episodes from otakudesu and generate M3U playlists for VLC",
+  "type": "module",
+  "scripts": {
+    "scrape": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0",
+    "octokit": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}
