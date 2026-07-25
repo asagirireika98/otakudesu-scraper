@@ -1,0 +1,18 @@
+services:
+  - type: worker
+    name: otakudesu-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run bot
+    envVars:
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_GUILD_ID
+        sync: false
+      - key: DISCORD_NOTIFY_CHANNEL_ID
+        sync: false
+      - key: DISCORD_WEBHOOK_URL
+        sync: false

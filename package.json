@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "scrape": "tsx src/index.ts",
+    "start": "tsx src/bot.ts",
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
     "bot": "tsx src/bot.ts",
