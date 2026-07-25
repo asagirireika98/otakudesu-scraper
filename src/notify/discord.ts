@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { getNotificationChannel } from '../bot/index.js';
+import { EmbedBuilder, TextChannel } from 'discord.js';
 
 interface DiscordEmbed {
   title: string;
@@ -8,11 +10,6 @@ interface DiscordEmbed {
   fields?: { name: string; value: string; inline?: boolean }[];
   footer?: { text: string };
   timestamp?: string;
-}
-
-interface DiscordMessage {
-  content?: string;
-  embeds?: DiscordEmbed[];
 }
 
 export function getDiscordWebhookUrl(): string | null {
@@ -107,6 +104,39 @@ export async function sendBatchNotification(
     console.log(`Sent Discord batch notification for ${episodes.length} episodes`);
   } catch (error) {
     console.error(`Failed to send Discord batch notification: ${(error as Error).message}`);
+  }
+}
+
+export async function sendBotNotification(
+  episodes: { animeName: string; episodeTitle: string; episodeUrl: string }[],
+  playlistUrl?: string
+): Promise<void> {
+  const channel = getNotificationChannel();
+  if (!channel) return;
+
+  if (episodes.length === 0) return;
+
+  const embeds = episodes.map(ep =>
+    new EmbedBuilder()
+      .setTitle(ep.animeName)
+      .setDescription(ep.episodeTitle)
+      .setColor(0x57f287)
+      .addFields(
+        { name: 'Episode', value: ep.episodeTitle, inline: true },
+        { name: 'Link', value: `[Watch](${ep.episodeUrl})`, inline: true }
+      )
+      .setTimestamp()
+  );
+
+  const content = playlistUrl
+    ? `**${episodes.length} new episode(s)!**\n[VLC Playlist](${playlistUrl})`
+    : `**${episodes.length} new episode(s)!**`;
+
+  try {
+    await channel.send({ content, embeds: embeds.slice(0, 10) });
+    console.log(`Sent bot notification for ${episodes.length} episodes`);
+  } catch (error) {
+    console.error(`Failed to send bot notification: ${(error as Error).message}`);
   }
 }
 
