@@ -1,23 +1,25 @@
 import { loadEpisodes, loadTrackedAnime } from '../config.js';
-import type { EpisodeData } from '../config.js';
 
 interface M3UGeneratorOptions {
-  workerBaseUrl: string;
+  mode?: 'worker' | 'direct';
+  workerBaseUrl?: string;
+  domain?: string;
   quality?: string;
 }
 
-export function generateM3U(options: M3UGeneratorOptions): string {
-  const { workerBaseUrl, quality = '720p' } = options;
+export function generateM3U(options: M3UGeneratorOptions = {}): string {
+  const {
+    mode = 'worker',
+    workerBaseUrl = 'https://otakudesu-worker.YOUR_SUBDOMAIN.workers.dev',
+    domain = 'otakudesu.blog',
+    quality = '720p',
+  } = options;
+
   const episodesData = loadEpisodes();
   const config = loadTrackedAnime();
-
-  const lines: string[] = [
-    '#EXTM3U',
-    `# Generated: ${new Date().toISOString()}`,
-    '',
-  ];
-
   const animeMap = new Map(config.anime.map(a => [a.slug, a.name]));
+
+  const entries: string[] = [];
 
   for (const [animeSlug, episodes] of Object.entries(episodesData.episodes)) {
     const animeName = animeMap.get(animeSlug) || animeSlug;
@@ -26,15 +28,19 @@ export function generateM3U(options: M3UGeneratorOptions): string {
       const episodeNum = episodeData.episode_number || extractEpisodeNumber(episodeData.title);
       const displayTitle = `${animeName} Ep.${episodeNum} Sub Indo [${quality}]`;
 
-      const streamUrl = `${workerBaseUrl}/stream?slug=${episodeSlug}&q=${quality}`;
+      let streamUrl: string;
+      if (mode === 'worker') {
+        streamUrl = `${workerBaseUrl}/proxy?slug=${episodeSlug}&q=${quality}`;
+      } else {
+        streamUrl = `https://${domain}/episode/${episodeSlug}/`;
+      }
 
-      lines.push(`#EXTINF:-1 group-title="Ongoing" tvg-logo="",${displayTitle}`);
-      lines.push(streamUrl);
-      lines.push('');
+      entries.push(`#EXTINF:-1 tvg-logo="" group-title="Ongoing",${displayTitle}`);
+      entries.push(streamUrl);
     }
   }
 
-  return lines.join('\n');
+  return `#EXTM3U\r\n${entries.join('\r\n')}\r\n`;
 }
 
 function extractEpisodeNumber(title: string): number {

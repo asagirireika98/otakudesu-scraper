@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 interface DomainConfig {
@@ -48,7 +48,6 @@ export function loadEpisodes(): EpisodeData {
 }
 
 export function saveEpisodes(data: EpisodeData): void {
-  const { writeFileSync } = require('fs');
   writeFileSync(join(dataDir, 'episodes.json'), JSON.stringify(data, null, 2));
 }
 

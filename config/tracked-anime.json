@@ -7,10 +7,14 @@
     {
       "slug": "youjo-senki-s2-sub-indo",
       "name": "Youjo Senki Season 2"
+    },
+    {
+      "slug": "elf-lie-sub-indo",
+      "name": "Elfen Lied BD (Episode 1 – 13) Subtitle Indonesia"
     }
   ],
   "settings": {
-    "max_episodes_per_anime": 5,
+    "max_episodes_per_anime": 50,
     "preferred_quality": "720p"
   }
 }
