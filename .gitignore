@@ -1,4 +1,15 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
-.env
+
+# Logs
 *.log
+
+# Environment & Secrets
+.env
+.dev.vars
+
+# Wrangler temp/cache directory
+.wrangler/
