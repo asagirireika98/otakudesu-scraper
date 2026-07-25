@@ -8,6 +8,7 @@
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
     "search": "tsx src/manage-anime.ts search",
+    "ongoing": "tsx src/manage-anime.ts ongoing",
     "add-anime": "tsx src/manage-anime.ts add",
     "remove-anime": "tsx src/manage-anime.ts remove",
     "list-anime": "tsx src/manage-anime.ts list"
