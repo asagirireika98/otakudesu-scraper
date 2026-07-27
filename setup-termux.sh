@@ -7,18 +7,42 @@ pkg install -y nodejs-lts npm git
 
 npm install -g pm2
 
-if [ ! -d "otakudesu-scraper" ]; then
-  git clone https://github.com/asagirireika98/otakudesu-scraper.git
+REPO_URL="https://github.com/asagirireika98/otakudesu-scraper.git"
+
+# Check if already inside the repo
+if [ -f "package.json" ] && grep -q "otakudesu-scraper" package.json 2>/dev/null; then
+  echo "Already inside otakudesu-scraper"
+  git pull
+else
+  # Check if repo already exists
+  if [ -d "otakudesu-scraper" ]; then
+    cd otakudesu-scraper
+    git pull
+  else
+    git clone "$REPO_URL"
+    cd otakudesu-scraper
+  fi
 fi
-
-cd otakudesu-scraper
-
-git pull
 
 npm install
 
 if [ ! -f ".env" ]; then
-  cp .env.example .env
+  if [ -f ".env.example" ]; then
+    cp .env.example .env
+  else
+    echo "Creating .env from scratch..."
+    cat > .env << 'EOF'
+GIST_ID=
+GH_PAT=
+DISCORD_BOT_TOKEN=
+DISCORD_CLIENT_ID=
+DISCORD_GUILD_ID=
+DISCORD_NOTIFY_CHANNEL_ID=
+DISCORD_WEBHOOK_URL=
+WORKER_BASE_URL=https://otakudesu-worker.asagirireika98.workers.dev
+M3U_MODE=worker
+EOF
+  fi
   echo ""
   echo "=== Edit .env dan isi semua variable ==="
   echo "nano .env"

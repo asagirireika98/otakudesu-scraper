@@ -1,4 +1,4 @@
-import { getGistConfig, getGistContent, updateGist } from '../github/gist.js';
+import { getGistConfig, getGistContent, updateGist } from './github/gist.js';
 
 interface TrackedConfig {
   anime: { slug: string; name: string }[];
