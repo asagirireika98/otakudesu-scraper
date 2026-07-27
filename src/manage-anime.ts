@@ -1,18 +1,7 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { loadDomains } from './config.js';
-
-const configPath = join(process.cwd(), 'config', 'tracked-anime.json');
-
-interface TrackedConfig {
-  anime: { slug: string; name: string }[];
-  settings: {
-    max_episodes_per_anime: number;
-    preferred_quality: string;
-  };
-}
+import { loadTrackedFromGist, saveTrackedToGist } from './gist-config.js';
 
 interface SearchResult {
   slug: string;
@@ -26,14 +15,6 @@ interface OngoingAnime {
   episode: string;
   date: string;
   url: string;
-}
-
-export function loadConfig(): TrackedConfig {
-  return JSON.parse(readFileSync(configPath, 'utf-8'));
-}
-
-export function saveConfig(config: TrackedConfig): void {
-  writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
 
 function getHeaders() {
@@ -82,8 +63,8 @@ export async function getOngoingAnime(): Promise<OngoingAnime[]> {
       const firstRes = await axios.get(baseUrl, { timeout: config.timeout_ms, headers: getHeaders() });
       const first$ = cheerio.load(firstRes.data);
 
-      const totalPages =[first$('.pagination a.page-numbers').not('.next').not('.dots').last().text().trim()];
-      const maxPage = parseInt(totalPages[0], 10) || 1;
+      const lastPageText = first$('.pagination a.page-numbers').not('.next').not('.dots').last().text().trim();
+      const maxPage = parseInt(lastPageText, 10) || 1;
 
       const results = parseOngoingPage(first$);
 
@@ -168,7 +149,7 @@ export function filterRecentOngoing(anime: OngoingAnime[], days: number = 14): O
 }
 
 export async function addAnime(slug: string): Promise<{ success: boolean; name?: string; error?: string }> {
-  const config = loadConfig();
+  const config = await loadTrackedFromGist();
 
   if (config.anime.some(a => a.slug === slug)) {
     return { success: false, error: `Already tracking: ${slug}` };
@@ -185,7 +166,11 @@ export async function addAnime(slug: string): Promise<{ success: boolean; name?:
     }
 
     config.anime.push({ slug, name });
-    saveConfig(config);
+    const saved = await saveTrackedToGist(config);
+
+    if (!saved) {
+      return { success: false, error: 'Failed to save to Gist' };
+    }
 
     return { success: true, name };
   } catch (error) {
@@ -193,8 +178,8 @@ export async function addAnime(slug: string): Promise<{ success: boolean; name?:
   }
 }
 
-export function removeAnime(slug: string): { success: boolean; error?: string } {
-  const config = loadConfig();
+export async function removeAnime(slug: string): Promise<{ success: boolean; error?: string }> {
+  const config = await loadTrackedFromGist();
   const idx = config.anime.findIndex(a => a.slug === slug);
 
   if (idx === -1) {
@@ -202,13 +187,18 @@ export function removeAnime(slug: string): { success: boolean; error?: string } 
   }
 
   config.anime.splice(idx, 1);
-  saveConfig(config);
+  const saved = await saveTrackedToGist(config);
+
+  if (!saved) {
+    return { success: false, error: 'Failed to save to Gist' };
+  }
 
   return { success: true };
 }
 
-export function listAnime(): { slug: string; name: string }[] {
-  return loadConfig().anime;
+export async function listAnime(): Promise<{ slug: string; name: string }[]> {
+  const config = await loadTrackedFromGist();
+  return config.anime;
 }
 
 async function interactiveSearch() {
@@ -313,14 +303,15 @@ if (process.argv[1] && process.argv[1].includes('manage-anime')) {
   } else if (command === 'add' && arg) {
     addAnime(arg).then(r => console.log(r));
   } else if (command === 'remove' && arg) {
-    console.log(removeAnime(arg));
+    removeAnime(arg).then(r => console.log(r));
   } else if (command === 'list') {
-    const anime = listAnime();
-    if (anime.length === 0) {
-      console.log('No anime tracked yet.');
-    } else {
-      anime.forEach(a => console.log(`  - ${a.name} (${a.slug})`));
-    }
+    listAnime().then(anime => {
+      if (anime.length === 0) {
+        console.log('No anime tracked yet.');
+      } else {
+        anime.forEach(a => console.log(`  - ${a.name} (${a.slug})`));
+      }
+    });
   } else {
     console.log('Usage:');
     console.log('  tsx src/manage-anime.ts search        # Search & add by name');

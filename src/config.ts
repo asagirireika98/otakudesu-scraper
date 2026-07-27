@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { getGistConfig, getGistContent, updateGist } from './github/gist.js';
 
 interface DomainConfig {
   domains: string[];
@@ -39,15 +40,47 @@ export function loadDomains(): DomainConfig {
   return JSON.parse(readFileSync(join(configDir, 'domains.json'), 'utf-8'));
 }
 
-export function loadTrackedAnime(): TrackedConfig {
+export async function loadTrackedAnime(): Promise<TrackedConfig> {
+  const gistConfig = getGistConfig();
+  if (gistConfig) {
+    const content = await getGistContent(gistConfig, 'tracked-anime.json');
+    if (content) {
+      try {
+        return JSON.parse(content) as TrackedConfig;
+      } catch {}
+    }
+  }
+
   return JSON.parse(readFileSync(join(configDir, 'tracked-anime.json'), 'utf-8'));
 }
 
-export function loadEpisodes(): EpisodeData {
+export async function loadEpisodes(): Promise<EpisodeData> {
+  const gistConfig = getGistConfig();
+  if (gistConfig) {
+    const content = await getGistContent(gistConfig, 'episodes.json');
+    if (content) {
+      try {
+        return JSON.parse(content) as EpisodeData;
+      } catch {}
+    }
+  }
+
   return JSON.parse(readFileSync(join(dataDir, 'episodes.json'), 'utf-8'));
 }
 
-export function saveEpisodes(data: EpisodeData): void {
+export async function saveEpisodes(data: EpisodeData): Promise<void> {
+  const gistConfig = getGistConfig();
+  if (gistConfig) {
+    try {
+      await updateGist(gistConfig, {
+        'episodes.json': { content: JSON.stringify(data, null, 2) },
+      });
+      return;
+    } catch (error) {
+      console.error('Failed to save episodes to Gist:', (error as Error).message);
+    }
+  }
+
   writeFileSync(join(dataDir, 'episodes.json'), JSON.stringify(data, null, 2));
 }
 

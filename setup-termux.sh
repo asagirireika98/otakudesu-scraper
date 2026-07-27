@@ -13,21 +13,47 @@ fi
 
 cd otakudesu-scraper
 
+git pull
+
 npm install
 
 if [ ! -f ".env" ]; then
   cp .env.example .env
   echo ""
-  echo "=== Edit .env dan isi token ==="
+  echo "=== Edit .env dan isi semua variable ==="
   echo "nano .env"
   echo ""
-  echo "Variable yang perlu diisi:"
-  echo "  DISCORD_BOT_TOKEN"
-  echo "  DISCORD_CLIENT_ID"
-  echo "  DISCORD_GUILD_ID (optional)"
-  echo "  DISCORD_NOTIFY_CHANNEL_ID"
+  echo "Variable yang WAJIB diisi:"
+  echo "  GH_PAT                  - GitHub Personal Access Token"
+  echo "  GIST_ID                 - ID Gist (874047cb9237951aca2bb5befa3e791f)"
+  echo "  DISCORD_BOT_TOKEN       - Token bot dari Discord Developer Portal"
+  echo "  DISCORD_CLIENT_ID       - Application ID dari General Information"
+  echo ""
+  echo "Variable OPSIONAL:"
+  echo "  DISCORD_GUILD_ID        - ID server (biar command cepet propagate)"
+  echo "  DISCORD_NOTIFY_CHANNEL_ID - Channel untuk notif episode baru"
+  echo "  DISCORD_WEBHOOK_URL     - Webhook URL (untuk scraper notification)"
   echo ""
   exit 0
+fi
+
+# Validate required vars
+source .env
+missing=()
+[ -z "$GH_PAT" ] && missing+=("GH_PAT")
+[ -z "$GIST_ID" ] && missing+=("GIST_ID")
+[ -z "$DISCORD_BOT_TOKEN" ] && missing+=("DISCORD_BOT_TOKEN")
+[ -z "$DISCORD_CLIENT_ID" ] && missing+=("DISCORD_CLIENT_ID")
+
+if [ ${#missing[@]} -gt 0 ]; then
+  echo ""
+  echo "=== ERROR: Missing required variables ==="
+  for v in "${missing[@]}"; do
+    echo "  - $v"
+  done
+  echo ""
+  echo "Edit .env: nano .env"
+  exit 1
 fi
 
 pm2 delete otakudesu-bot 2>/dev/null

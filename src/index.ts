@@ -24,7 +24,7 @@ async function main(): Promise<void> {
 
     const m3uMode = (process.env.M3U_MODE as 'worker' | 'direct') || 'worker';
     const workerBaseUrl = process.env.WORKER_BASE_URL || '';
-    const m3uContent = generateM3U({
+    const m3uContent = await generateM3U({
       mode: m3uMode,
       workerBaseUrl: workerBaseUrl || undefined,
     });

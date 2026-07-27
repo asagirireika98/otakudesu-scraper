@@ -7,7 +7,7 @@ interface M3UGeneratorOptions {
   quality?: string;
 }
 
-export function generateM3U(options: M3UGeneratorOptions = {}): string {
+export async function generateM3U(options: M3UGeneratorOptions = {}): Promise<string> {
   const {
     mode = 'worker',
     workerBaseUrl = 'https://otakudesu-worker.YOUR_SUBDOMAIN.workers.dev',
@@ -15,8 +15,8 @@ export function generateM3U(options: M3UGeneratorOptions = {}): string {
     quality = '720p',
   } = options;
 
-  const episodesData = loadEpisodes();
-  const config = loadTrackedAnime();
+  const episodesData = await loadEpisodes();
+  const config = await loadTrackedAnime();
   const animeMap = new Map(config.anime.map(a => [a.slug, a.name]));
 
   const entries: string[] = [];

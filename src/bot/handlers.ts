@@ -1,6 +1,5 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { searchAnime, getOngoingAnime, filterRecentOngoing, addAnime, removeAnime, listAnime } from '../manage-anime.js';
-import { loadTrackedAnime } from '../config.js';
 
 const GIST_RAW_URL = 'https://gist.githubusercontent.com/asagirireika98/874047cb9237951aca2bb5befa3e791f/raw/anime.m3u';
 
@@ -84,20 +83,24 @@ export async function handleAdd(interaction: ChatInputCommandInteraction) {
 export async function handleRemove(interaction: ChatInputCommandInteraction) {
   const slug = interaction.options.getString('slug', true);
 
-  const result = removeAnime(slug);
+  await interaction.deferReply();
+
+  const result = await removeAnime(slug);
 
   if (result.success) {
-    await interaction.reply(`Removed \`${slug}\` from tracked list.`);
+    await interaction.editReply(`Removed \`${slug}\` from tracked list.`);
   } else {
-    await interaction.reply(`Failed: ${result.error}`);
+    await interaction.editReply(`Failed: ${result.error}`);
   }
 }
 
 export async function handleList(interaction: ChatInputCommandInteraction) {
-  const anime = listAnime();
+  await interaction.deferReply();
+
+  const anime = await listAnime();
 
   if (anime.length === 0) {
-    await interaction.reply('No anime tracked yet.');
+    await interaction.editReply('No anime tracked yet.');
     return;
   }
 
@@ -109,7 +112,7 @@ export async function handleList(interaction: ChatInputCommandInteraction) {
     )
     .setFooter({ text: `${anime.length} anime tracked` });
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.editReply({ embeds: [embed] });
 }
 
 export async function handlePlaylist(interaction: ChatInputCommandInteraction) {

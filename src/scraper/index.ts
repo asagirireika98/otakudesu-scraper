@@ -8,8 +8,8 @@ export interface ScrapeResult {
 }
 
 export async function scrapeAll(): Promise<ScrapeResult> {
-  const config = loadTrackedAnime();
-  const episodesData = loadEpisodes();
+  const config = await loadTrackedAnime();
+  const episodesData = await loadEpisodes();
   const results: ScrapeResult = {
     anime: [],
     newEpisodes: [],
