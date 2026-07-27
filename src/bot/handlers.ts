@@ -38,14 +38,26 @@ export async function handleOngoing(interaction: ChatInputCommandInteraction) {
   }
 
   const recent = filterRecentOngoing(ongoing, 14);
+  const older = ongoing.filter(a => !recent.includes(a));
+
+  let desc = '';
+  let num = 1;
+
+  if (recent.length > 0) {
+    desc += `**Recent (2 weeks)**\n`;
+    desc += recent.map((a) => `${num++}. ${a.name}\n${a.episode} | ${a.date}`).join('\n\n');
+  }
+
+  if (older.length > 0) {
+    desc += `\n\n**Older**\n`;
+    desc += older.map((a) => `${num++}. ${a.name}\n${a.episode} | ${a.date}`).join('\n\n');
+  }
 
   const embed = new EmbedBuilder()
-    .setTitle('Ongoing Anime (2 weeks)')
+    .setTitle('Ongoing Anime')
     .setColor(0x57f287)
-    .setDescription(
-      recent.map((a, i) => `**${i + 1}.** ${a.name}\n${a.episode} | ${a.date}`).join('\n\n')
-    )
-    .setFooter({ text: `${recent.length} anime updated recently` });
+    .setDescription(desc)
+    .setFooter({ text: `${ongoing.length} total | Use /add <slug> to track` });
 
   await interaction.editReply({ embeds: [embed] });
 }

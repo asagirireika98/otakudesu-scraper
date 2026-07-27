@@ -78,31 +78,25 @@ export async function getOngoingAnime(): Promise<OngoingAnime[]> {
 
   for (const domain of config.domains) {
     try {
-      const url = `https://${domain}/ongoing-anime/`;
-      const res = await axios.get(url, { timeout: config.timeout_ms, headers: getHeaders() });
-      const $ = cheerio.load(res.data);
+      const baseUrl = `https://${domain}/ongoing-anime/`;
+      const firstRes = await axios.get(baseUrl, { timeout: config.timeout_ms, headers: getHeaders() });
+      const first$ = cheerio.load(firstRes.data);
 
-      const results: OngoingAnime[] = [];
+      const totalPages =[first$('.pagination a.page-numbers').not('.next').not('.dots').last().text().trim()];
+      const maxPage = parseInt(totalPages[0], 10) || 1;
 
-      $('.venz .detpost').each((_, el) => {
-        const $el = $(el);
-        const link = $el.find('.thumb a').first();
-        const href = link.attr('href') || '';
-        const name = $el.find('h2.jdlflm').text().trim();
-        const episode = $el.find('.epz').text().trim().replace('Episode ', 'Ep. ');
-        const date = $el.find('.newnime').text().trim();
+      const results = parseOngoingPage(first$);
 
-        const slugMatch = href.match(/\/anime\/([^/]+)\/?$/);
-        if (slugMatch && name) {
-          results.push({
-            slug: slugMatch[1],
-            name,
-            episode,
-            date,
-            url: href,
-          });
+      for (let page = 2; page <= maxPage; page++) {
+        try {
+          const pageUrl = `${baseUrl}page/${page}/`;
+          const res = await axios.get(pageUrl, { timeout: config.timeout_ms, headers: getHeaders() });
+          const $ = cheerio.load(res.data);
+          results.push(...parseOngoingPage($));
+        } catch (err) {
+          console.error(`Failed to fetch ongoing page ${page}: ${(err as Error).message}`);
         }
-      });
+      }
 
       return results;
     } catch (error) {
@@ -112,6 +106,32 @@ export async function getOngoingAnime(): Promise<OngoingAnime[]> {
   }
 
   return [];
+}
+
+function parseOngoingPage($: cheerio.CheerioAPI): OngoingAnime[] {
+  const results: OngoingAnime[] = [];
+
+  $('.venz .detpost').each((_, el) => {
+    const $el = $(el);
+    const link = $el.find('.thumb a').first();
+    const href = link.attr('href') || '';
+    const name = $el.find('h2.jdlflm').text().trim();
+    const episode = $el.find('.epz').text().trim().replace('Episode ', 'Ep. ');
+    const date = $el.find('.newnime').text().trim();
+
+    const slugMatch = href.match(/\/anime\/([^/]+)\/?$/);
+    if (slugMatch && name) {
+      results.push({
+        slug: slugMatch[1],
+        name,
+        episode,
+        date,
+        url: href,
+      });
+    }
+  });
+
+  return results;
 }
 
 export function filterRecentOngoing(anime: OngoingAnime[], days: number = 14): OngoingAnime[] {
@@ -242,18 +262,23 @@ async function showOngoing() {
 
   const recent = filterRecentOngoing(ongoing, 14);
   const older = ongoing.filter(a => !recent.includes(a));
+  const all = [...recent, ...older];
+
+  let num = 1;
 
   console.log(`=== Recent (2 weeks) [${recent.length}] ===`);
-  recent.forEach((a, i) => {
-    console.log(`  ${i + 1}. ${a.name}`);
+  recent.forEach((a) => {
+    console.log(`  ${num}. ${a.name}`);
     console.log(`     ${a.episode} | ${a.date} | slug: ${a.slug}`);
+    num++;
   });
 
   if (older.length > 0) {
     console.log(`\n=== Older [${older.length}] ===`);
-    older.forEach((a, i) => {
-      console.log(`  ${i + 1}. ${a.name}`);
+    older.forEach((a) => {
+      console.log(`  ${num}. ${a.name}`);
       console.log(`     ${a.episode} | ${a.date} | slug: ${a.slug}`);
+      num++;
     });
   }
 
@@ -264,7 +289,6 @@ async function showOngoing() {
 
   const choice = await question('\nEnter number to add anime (or 0 to cancel): ');
   const idx = parseInt(choice, 10) - 1;
-  const all = [...recent, ...older];
 
   if (idx >= 0 && idx < all.length) {
     const result = await addAnime(all[idx].slug);
